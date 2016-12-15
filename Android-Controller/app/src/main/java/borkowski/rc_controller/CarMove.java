@@ -2,16 +2,14 @@ package borkowski.rc_controller;
 
 public class CarMove {
     private int turn;
+    private int straight;
 
     public int getStraight() {
         return straight;
     }
-
     public int getTurn() {
         return turn;
     }
-
-    private int straight;
 
     public CarMove(int turn, int straight) {
         this.turn = turn;

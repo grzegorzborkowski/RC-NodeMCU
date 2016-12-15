@@ -7,6 +7,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -22,9 +24,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mSensor;
     private static long lastChange = 0;
     private final float[] deltaRotationVector = new float[4];
-    public TextView xTextView;
-    public TextView zTextView;
-    CarMove stopMove = new CarMove(90, 0);
+    private TextView xTextView;
+    private TextView yTextView;
+    private TextView zTextView;
+    private Button stopButton;
+    private CarMove stopMove = new CarMove(90, 0);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +37,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         this.mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         setContentView(R.layout.activity_main);
         xTextView = (TextView) findViewById(R.id.xTextView);
+        yTextView = (TextView) findViewById(R.id.yTextView);
         zTextView = (TextView) findViewById(R.id.zTextView);
         if (this.mSensor == null) {
             xTextView.setText(R.string.noAccelerometerMessage);
         }
+        this.stopButton = (Button) findViewById(R.id.stopButton);
+        this.stopButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new ConnectionService().execute(stopMove);
+            }
+        });
         new ConnectionService().execute(stopMove);
     }
 
@@ -69,8 +81,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         deltaRotationVector[2] = (float) (sinThetaOverTwo * axisZ);
         deltaRotationVector[3] = (float) cosThetaOverTwo;
         xTextView.setText(String.valueOf("X " + deltaRotationVector[0]));
+        yTextView.setText(String.valueOf("Y " + deltaRotationVector[1]));
         zTextView.setText(String.valueOf("Z " + deltaRotationVector[2]));
-        CarMove carMove = calculateCarMoves(deltaRotationVector[0], deltaRotationVector[2]);
+        CarMove carMove = calculateCarMoves(deltaRotationVector[1], deltaRotationVector[2]);
         new ConnectionService().execute(carMove);
         float[] deltaRotationMatrix = new float[9];
         SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
@@ -85,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int calculateTurnValue(float x) {
         float calculatedX = -x * 100;
         calculatedX += 80;
-        if (calculatedX >= 60 && 100 >= calculatedX) {
+        if (calculatedX >= 40 && 80 >= calculatedX) {
             return 90;
         } else {
             return (int) calculatedX;
@@ -105,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public final void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Do something here if sensor accuracy changes.
     }
 
     @Override

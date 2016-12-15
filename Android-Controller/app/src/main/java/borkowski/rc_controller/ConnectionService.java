@@ -14,47 +14,34 @@ public class ConnectionService extends android.os.AsyncTask{
 
     @Override
     protected Object doInBackground(Object[] objects) {
-        System.out.println(objects[0]);
-        executeTurnQuery((CarMove) objects[0]);
-        executeStraightQuery((CarMove) objects[0]);
+        CarMove carMove = (CarMove) objects[0];
+        executeQuery("/?pinD=", carMove, false);
+        executeQuery("/?pin=", carMove, true);
         return null;
     }
 
-    private void executeStraightQuery(CarMove carMove) {
-        String code;
-        if(carMove.getStraight() > 0) {
-            code = "slow";
-        }
-        else if (carMove.getStraight() == 0) {
-            code = "stop";
-        } else {
-            code = "back";
-        }
-
+    // TODO: Change deprecated httpClient to: http://loopj.com/android-async-http/
+    private void executeQuery(String link, CarMove carMove, boolean turn) {
         try {
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet request = new HttpGet();
-            URI uri = new URI(defaultIP + "/?pinD=" + code);
-            System.out.println(uri);
+            String suffix;
+            if(turn) suffix = String.valueOf(carMove.getTurn());
+            else {
+                if(carMove.getStraight() > 0) {
+                    suffix = "slow";
+                }
+                else if (carMove.getStraight() == 0) {
+                    suffix = "stop";
+                } else {
+                    suffix = "back";
+                }
+            }
+            URI uri = new URI(defaultIP + link + suffix);
             request.setURI(uri);
             HttpResponse httpResponse = httpClient.execute(request);
             System.out.println(httpResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void executeTurnQuery(CarMove carMove) {
-        try {
-            HttpClient httpClient = new DefaultHttpClient();
-            HttpGet request = new HttpGet();
-            URI uri = new URI(defaultIP + "/?pin=" + carMove.getTurn());
-//            URI uri = new URI(defaultIP + "/?pinD=slow");
-            System.out.println(uri);
-            request.setURI(uri);
-            HttpResponse httpResponse = httpClient.execute(request);
-            System.out.println(httpResponse);
-        } catch (Exception e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
