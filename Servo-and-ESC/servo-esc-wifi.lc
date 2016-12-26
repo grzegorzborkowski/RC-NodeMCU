@@ -17,23 +17,6 @@ wifi.setmode(wifi.SOFTAP)
 wifi.ap.setip(cfg)
 wifi.ap.config(cfg)
 
-TURN_TAGS =  "<p><a href=\"?pin=5\"><button>5</button></a>&nbsp;"..
-    "<a href=\"?pin=15\"><button>15</button></a>&nbsp;"..
-     "<a href=\"?pin=40\"><button>40</button></a>&nbsp;"..
-      "<a href=\"?pin=45\"><button>45</button></a>&nbsp;"..
-       "<a href=\"?pin=77,5\"><button>77,5</button></a>&nbsp;"..
-        "<a href=\"?pin=90\"><button>90</button></a>&nbsp;"..
-         "<a href=\"?pin=102\"><button>102</button></a>&nbsp;"..
-          "<a href=\"?pin=133\"><button>133</button></a>&nbsp;"..
-           "<a href=\"?pin=170\"><button>170</button></a>&nbsp;"..
-             "<a href=\"?pin=180\"><button>180</button></a></p>"
-
-DRIVE_TAGS = "<p><a href=\"?pinD=slow\"><button>SLOW</button></a>&nbsp;"..
-    "<a href=\"?pinD=fast\"><button>FAST</button></a>&nbsp;"..
-    "<a href=\"?pinD=stop\"><button>STOP</button></a>&nbsp;"..
-     "<a href=\"?pinD=back\"><button>BACK</button></a></p>"
-
-
 function degreesToDuty(degrees)
     local duty = CENTRAL_POSITION + (degrees-90)/4,5;
     return duty;
@@ -42,9 +25,9 @@ end
 function powerToDuty(power)
     local duty = 0;
     if(power<0) then
-        duty = 76 + power;
+        duty = 75 + power;
     elseif(power>0) then
-        duty = 83 + power;
+        duty = 84 + power;
     elseif(power==0) then
         duty = 80;
     end
@@ -82,11 +65,10 @@ function drive(power)
     pwm.setduty(ESC_GPIO, duty);
 end
 
-
 local srv = net.createServer(net.TCP)
 srv:listen(80,function(conn)
     conn:on("receive", function(client, request)
-        local buf = "";
+        print(request);
         local _, _, _, _, requestContent = string.find(request, "([A-Z]+) (.+)?(.+) HTTP");
         local _GET = {}
         if (requestContent ~= nil) then
@@ -94,18 +76,12 @@ srv:listen(80,function(conn)
                 _GET[key] = value
             end
         end
-
-        buf = buf.."<h1>My Car</h1>";
-        buf = buf.."<h2>TURN (example values)</h2>";
-        buf = buf..TURN_TAGS;
-        buf = buf.."<h2>DRIVE</h2>";
-        buf = buf..DRIVE_TAGS;
-
+        
         if(_GET.pin ~= nil and _GET.pin ~= '') then
             local degrees = tonumber(_GET.pin)
             turn(degrees);
         end
-
+        
         if(_GET.pinD == "slow") then
             drive(1);
         elseif(_GET.pinD == "fast") then
@@ -116,7 +92,7 @@ srv:listen(80,function(conn)
             drive(-1);
         end
 
-        client:send(buf);
+        client:send("Request received.");
         client:close();
         collectgarbage();
     end)
