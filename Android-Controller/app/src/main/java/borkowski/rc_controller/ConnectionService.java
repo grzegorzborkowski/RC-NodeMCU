@@ -39,20 +39,20 @@ public class ConnectionService extends android.os.AsyncTask{
     }
 
     private RequestParams countMoveParams(CarMove carMove) {
-        String turn;
-        String drive;
-        turn =  String.valueOf(carMove.getTurn());
-        if (carMove.getStraight() > 0) {
-            drive = "back";
-        } else if (carMove.getStraight() == 0) {
-            drive = "stop";
+        String degrees;
+        String power;
+        degrees =  String.valueOf(carMove.getTurn());
+        if (carMove.getStraight() < -3) {
+            power = "back";
+        } else if (carMove.getStraight() > 3) {
+            power = "slow";
         } else {
-            drive = "slow";
+            power = "stop";
         }
 
         RequestParams params = new RequestParams();
-        params.put("pinD", drive);
-        params.put("pin", turn);
+        params.put("power", power);
+        params.put("degrees", degrees);
 
         return params;
     }

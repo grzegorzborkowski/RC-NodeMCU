@@ -17,6 +17,7 @@ wifi.setmode(wifi.SOFTAP)
 wifi.ap.setip(cfg)
 wifi.ap.config(cfg)
 
+
 function degreesToDuty(degrees)
     local duty = CENTRAL_POSITION + (degrees-90)/4,5;
     return duty;
@@ -65,6 +66,7 @@ function drive(power)
     pwm.setduty(ESC_GPIO, duty);
 end
 
+
 local srv = net.createServer(net.TCP)
 srv:listen(80,function(conn)
     conn:on("receive", function(client, request)
@@ -77,18 +79,18 @@ srv:listen(80,function(conn)
             end
         end
         
-        if(_GET.pin ~= nil and _GET.pin ~= '') then
-            local degrees = tonumber(_GET.pin)
+        if(_GET.degrees ~= nil and _GET.degrees ~= '') then
+            local degrees = tonumber(_GET.degrees)
             turn(degrees);
         end
         
-        if(_GET.pinD == "slow") then
+        if(_GET.power == "slow") then
             drive(1);
-        elseif(_GET.pinD == "fast") then
+        elseif(_GET.power == "fast") then
             drive(2);
-        elseif(_GET.pinD == "stop") then
+        elseif(_GET.power == "stop") then
             drive(0);
-        elseif(_GET.pinD == "back") then
+        elseif(_GET.power == "back") then
             drive(-1);
         end
 
