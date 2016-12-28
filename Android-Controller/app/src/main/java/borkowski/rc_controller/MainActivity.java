@@ -11,15 +11,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
-    private static final double EPSILON = 0.00001;
     private SensorManager mSensorManager;
     private Sensor mSensor;
     private static long lastChange = 0;
@@ -58,62 +51,40 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         long diffInNanoSeconds = currentTime - lastChange;
         double diffInSeconds = diffInNanoSeconds / 1000000000.0;
         if(diffInSeconds > 0.5) {
-            contactSensor(event, diffInSeconds);
+            contactSensor(event);
             lastChange = currentTime;
         }
     }
 
-    private void contactSensor(SensorEvent event, double timediff) {
+    private void contactSensor(SensorEvent event) {
         double axisX = event.values[0];
         double axisY = event.values[1];
         double axisZ = event.values[2];
-        double omegaMagnitude = Math.sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ);
-        if (omegaMagnitude > EPSILON) {
-            axisX /= omegaMagnitude;
-            axisY /= omegaMagnitude;
-            axisZ /= omegaMagnitude;
-        }
-        double thetaOverTwo = omegaMagnitude * timediff / 2.0f;
-        double sinThetaOverTwo = Math.sin(thetaOverTwo);
-        double cosThetaOverTwo = Math.cos(thetaOverTwo);
-        deltaRotationVector[0] = (float) (sinThetaOverTwo * axisX);
-        deltaRotationVector[1] = (float) (sinThetaOverTwo * axisY);
-        deltaRotationVector[2] = (float) (sinThetaOverTwo * axisZ);
-        deltaRotationVector[3] = (float) cosThetaOverTwo;
-        xTextView.setText(String.valueOf("X " + deltaRotationVector[0]));
-        yTextView.setText(String.valueOf("Y " + deltaRotationVector[1]));
-        zTextView.setText(String.valueOf("Z " + deltaRotationVector[2]));
-        CarMove carMove = calculateCarMoves(deltaRotationVector[1], deltaRotationVector[2]);
+        System.out.println("X = " + axisX + "Y = " + axisY + "Z = " + axisZ);
+        xTextView.setText(String.valueOf("X " + axisX));
+        yTextView.setText(String.valueOf("Y " + axisY));
+        zTextView.setText(String.valueOf("Z " + axisZ));
+        CarMove carMove = calculateCarMoves(axisY, axisZ);
+
         new ConnectionService().execute(carMove);
         float[] deltaRotationMatrix = new float[9];
         SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector);
     }
 
-    private CarMove calculateCarMoves(float x, float z) {
-        int turn = calculateTurnValue(x);
+    private CarMove calculateCarMoves(double y, double z) {
+        int turn = calculateTurnValue(y);
         int straight = calculateStraightValue(z);
         return new CarMove(turn, straight);
     }
 
-    private int calculateTurnValue(float x) {
-        float calculatedX = -x * 100;
-        calculatedX += 80;
-        if (calculatedX >= 40 && 80 >= calculatedX) {
-            return 90;
-        } else {
-            return (int) calculatedX;
-        }
+    private int calculateTurnValue(double y) {
+        int degrees = 90 + (9 * (int) Math.round(y));
+        return degrees;
     }
 
-    private int calculateStraightValue(float z) {
-        float calculatedZ = z * 100;
-        if (10 >= calculatedZ && calculatedZ >= -5) {
-            return 0;
-        }
-        if (z < 0) {
-          return -1;
-        }
-         return 1;
+    private int calculateStraightValue(double z) {
+        int power = (int) Math.round(z);
+        return power;
     }
 
     @Override
