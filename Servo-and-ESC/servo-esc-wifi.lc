@@ -5,6 +5,8 @@ CENTRAL_POSITION=76
 
 PIN_COMMAND_REGEXP = "(%w+)=(%w+)&*"
 
+LAST_REQUEST_TIME = 0
+
 cfg={}
 cfg.ssid="mywifi"
 cfg.pwd="qwerty123"
@@ -16,7 +18,6 @@ cfg.gateway="192.168.4.1"
 wifi.setmode(wifi.SOFTAP)
 wifi.ap.setip(cfg)
 wifi.ap.config(cfg)
-
 
 function degreesToDuty(degrees)
     local duty = CENTRAL_POSITION + (degrees-90)/4,5;
@@ -66,10 +67,18 @@ function drive(power)
     pwm.setduty(ESC_GPIO, duty);
 end
 
+-- Checks every second, if there was any request received
+-- during the last two seconds. If not, stops the car.
+tmr.alarm(0, 1000, 1, function()
+    if(tmr.time() > LAST_REQUEST_TIME + 2) then
+        drive(0);
+    end
+end)
 
 local srv = net.createServer(net.TCP)
 srv:listen(80,function(conn)
     conn:on("receive", function(client, request)
+        LAST_REQUEST_TIME = tmr.time();
         print(request);
         local _, _, _, _, requestContent = string.find(request, "([A-Z]+) (.+)?(.+) HTTP");
         local _GET = {}
@@ -97,5 +106,8 @@ srv:listen(80,function(conn)
         client:send("Request received.");
         client:close();
         collectgarbage();
+    end)
+    conn:on("disconnection", function(conn)
+        print("Disconnected")
     end)
 end)
