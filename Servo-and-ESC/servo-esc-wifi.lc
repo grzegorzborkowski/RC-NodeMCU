@@ -5,6 +5,10 @@ CENTRAL_POSITION=76
 
 PIN_COMMAND_REGEXP = "(%w+)=(%w+)&*"
 
+TIMER_ID = 0
+TIMER_INTERVAL = 1000
+TIMER_MODE = 1
+
 LAST_REQUEST_TIME = 0
 
 cfg={}
@@ -33,7 +37,6 @@ function powerToDuty(power)
     elseif(power==0) then
         duty = 80;
     end
-
     return duty;
 end
 
@@ -42,11 +45,9 @@ end
 -- 90 means central position of tyres
 -- 0 means maximal left position of tyres
 function turn(degrees)
-
     pwm.stop(SERVO_GPIO);
     pwm.setclock(SERVO_GPIO, CLOCK);
     local duty = degreesToDuty(degrees);
-    
     pwm.setup(SERVO_GPIO, CLOCK, duty);
     pwm.start(SERVO_GPIO);
     pwm.setduty(SERVO_GPIO, duty);
@@ -59,7 +60,6 @@ end
 -- 5 means maximal speed forward
 function drive(power)
     local duty = powerToDuty(power);
-
     pwm.stop(ESC_GPIO);
     pwm.setclock(ESC_GPIO, CLOCK);
     pwm.setup(ESC_GPIO, CLOCK, duty);
@@ -67,9 +67,9 @@ function drive(power)
     pwm.setduty(ESC_GPIO, duty);
 end
 
--- Checks every second, if there was any request received
--- during the last two seconds. If not, stops the car.
-tmr.alarm(0, 1000, 1, function()
+-- Checks every second (TIMER_INTERVAL), if there was any request
+-- received during the last two seconds. If not, stops the car.
+tmr.alarm(TIMER_ID, TIMER_INTERVAL, TIMER_MODE, function()
     if(tmr.time() > LAST_REQUEST_TIME + 2) then
         drive(0);
     end
@@ -93,14 +93,18 @@ srv:listen(80,function(conn)
             turn(degrees);
         end
         
-        if(_GET.power == "slow") then
+        if(_GET.power == "forwardSlow") then
             drive(1);
-        elseif(_GET.power == "fast") then
+        elseif(_GET.power == "forwardMedium") then
             drive(2);
+        elseif(_GET.power == "forwardFast") then
+            drive(3);
         elseif(_GET.power == "stop") then
             drive(0);
-        elseif(_GET.power == "back") then
+        elseif(_GET.power == "backSlow") then
             drive(-1);
+        elseif(_GET.power == "backMedium") then
+            drive(-2);
         end
 
         client:send("Request received.");

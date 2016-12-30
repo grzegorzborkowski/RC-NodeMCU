@@ -42,10 +42,16 @@ public class ConnectionService extends android.os.AsyncTask{
         String degrees;
         String power;
         degrees =  String.valueOf(carMove.getTurn());
-        if (carMove.getStraight() < -3) {
-            power = "back";
-        } else if (carMove.getStraight() > 3) {
-            power = "slow";
+        if (carMove.getStraight() <= -6.5) {
+            power = "backMedium";
+        } else if (carMove.getStraight() <= -3 && carMove.getStraight() > -6.5) {
+            power = "backSlow";
+        } else if (carMove.getStraight() >= 3 && carMove.getStraight() < 5.5) {
+            power = "forwardSlow";
+        } else if (carMove.getStraight() >= 5.5 && carMove.getStraight() < 8) {
+            power = "forwardMedium";
+        } else if (carMove.getStraight() >= 8) {
+            power = "forwardFast";
         } else {
             power = "stop";
         }
